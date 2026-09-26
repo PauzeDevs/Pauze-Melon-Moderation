@@ -1,6 +1,6 @@
 <div align="center">
 
-# Melon
+# PauzeX
 
 A feature-rich, open source multipurpose Discord bot built with Discord.js v14.
 Designed for server protection, community management, AI chat, and automation.
@@ -13,22 +13,18 @@ Designed for server protection, community management, AI chat, and automation.
 
 ## Overview
 
-Melon is a fully self-hostable, open source multipurpose Discord bot engineered to replace the need for several bots in a single server. It supports both **prefix commands** (default: `,`) and **slash commands** through a unified hybrid command system. Persistent data is stored in a **PostgreSQL** database via Sequelize ORM, and every feature is configurable on a per-server basis through setup commands.
-
----
+PauzeX is a fully self-hostable, open source multipurpose Discord bot engineered to replace the need for several bots in a single server. It supports both **prefix commands** (default: `,`) and **slash commands** through a unified hybrid command system. Persistent data is stored in a **PostgreSQL** database via Sequelize ORM, and every feature is configurable on a per-server basis through setup commands.
 
 ## Features
 
 ### Security & Antinuke
 Protect your server from malicious actors and raids.
-
 - Detects and blocks mass channel deletions, role deletions, webhook creations, and unauthorized bot joins
 - Interactive setup wizard with configurable thresholds and punishment actions
 - Per-server whitelist management for trusted users and bots
 
 ### Moderation
 Essential tools for keeping your server in order.
-
 - Ban, kick, mute, and temporary role assignment with reason tracking
 - Slowmode, channel lock/unlock, and nickname management
 - Bulk message purging with filters (user, bots, all)
@@ -36,22 +32,19 @@ Essential tools for keeping your server in order.
 
 ### Automod
 Automatic rule enforcement without manual intervention.
-
 - Invite link and URL filtering with configurable whitelists
 - Anti-spam and mass mention detection
 - Per-channel and per-role whitelist support
 
 ### Logging
 A comprehensive server audit trail.
-
 - Tracks message edits and deletions with content snapshots
 - Logs server changes: channels, roles, and emojis
 - Member joins, leaves, user updates, and voice state changes
 - Fully configurable log channel routing per event type
 
 ### AI Integration
-A built-in conversational AI assistant named Melon.
-
+A built-in conversational AI assistant named PauzeX.
 - Powered by **Groq API** for fast language model responses
 - Image analysis via **Gemini Vision API**
 - Real-time web search via **SerpAPI**
@@ -60,7 +53,6 @@ A built-in conversational AI assistant named Melon.
 
 ### Ticketing
 A complete support ticket system.
-
 - Multiple ticket categories with dedicated staff roles
 - Claim, transfer, rename, close, delete, and reopen tickets
 - Full ticket transcripts
@@ -68,28 +60,24 @@ A complete support ticket system.
 
 ### Giveaways
 Run clean and fair giveaways.
-
 - Create giveaways with a custom prize, duration, and winner count
 - End giveaways early and reroll winners at any time
 - Automated ending with winner announcement
 
 ### Welcome & Farewell
 Fully customizable join and leave messages.
-
 - Rich embed configuration with image and background support
 - Test command to preview messages before going live
 - Per-server setup with channel routing
 
 ### Profile System
 User identity and engagement tracking.
-
 - Canvas-generated profile cards with custom biography, background, and social links
 - View profiles for any server member
 - Global message and invite leaderboards
 
 ### Utility
 A wide range of general-purpose tools.
-
 - Unit and encoding conversions (cm/ft, kg/lb, Base32, Hex, Rot13, Binary)
 - Server info, user info, role info, and invite tracking with join positions
 - Export server data: bans, roles, members, and messages to file
@@ -97,7 +85,6 @@ A wide range of general-purpose tools.
 
 ### Automation
 Background systems that run without manual input.
-
 - **Join to Create (J2C)** — dynamic temporary voice channels
 - **Autopost** — schedule recurring messages in any channel
 - **Autobump** — automated server bump scheduling
@@ -107,7 +94,6 @@ Background systems that run without manual input.
 
 ### Fun & Roleplay
 Engagement commands for active communities.
-
 - Roleplay commands: hug, kiss, slap, pat, and more
 - Animal facts and images, meme generation, ship calculator, fake hack
 - GitHub and YouTube search integrations
@@ -120,8 +106,8 @@ Engagement commands for active communities.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/AeroXDevs/melon.git
-cd melon
+git clone https://github.com/PauzeDevs/Pauze-Melon-Moderation.git
+cd Pauze-Melon-Moderation
 
 # 2. Install dependencies
 npm install
@@ -132,23 +118,6 @@ npm install
 # 4. Start the bot
 npm start
 ```
-
----
-
-## Emoji Synchronisation
-
-Melon uses **application emojis** — emojis uploaded directly to the bot's Discord application — so they are available globally across every server without requiring a dedicated emoji server.
-
-On first start, if a `tempassets/` folder is present in the project root containing emoji images (`.webp` for static, `.gif` for animated), Melon automatically:
-
-1. Uploads every image to the bot's application emojis via the Discord API
-2. Updates `src/emojis.json` with the new emoji IDs
-3. Deletes the `tempassets/` folder
-4. Restarts once to load the updated IDs
-
-On all subsequent starts the folder is absent, so the sync is skipped and the bot boots normally. No manual setup is required — the entire process is handled at startup.
-
-> **Note:** `tempassets/` is excluded from the repository via `.gitignore`. To re-run the sync (e.g. after adding new emojis), recreate the folder with the new images and restart the bot.
 
 ---
 
@@ -175,77 +144,28 @@ The database schema is automatically synced on startup — no manual migrations 
 
 ## Project Structure
 
-```
-src/
-├── client.js                    Entry point — initializes client, DB, and loaders
-├── config.js                    Bot configuration and API keys
-├── emojis.json                  Application emoji mappings (name → formatted string)
-├── hybrid/                      Hybrid slash + prefix commands
-│   ├── ai/                      Melon AI chat
-│   ├── antinuke/                Antinuke protection
-│   ├── automod/                 Automated moderation
-│   ├── autobump/                Server bump automation
-│   ├── autopost/                Scheduled message posting
-│   ├── autoreact/               Auto-reaction bindings
-│   ├── farewell/                Farewell messages
-│   ├── giveaway/                Giveaway management
-│   ├── j2c/                     Join to Create voice channels
-│   ├── leaderboard/             Message and invite leaderboards
-│   ├── logging/                 Audit log configuration
-│   ├── profile/                 User profile cards
-│   ├── reactionroles/           Reaction-based role assignment
-│   ├── remind/                  Personal reminders
-│   ├── ticket/                  Full ticket system
-│   ├── todo/                    Personal todo lists
-│   ├── vanityroles/             Status-based role assignment
-│   ├── voice/                   Voice channel moderation
-│   ├── welcome/                 Welcome messages
-│   └── ...                      And more
-├── gateway/                     Discord event handlers
-│   ├── antinuke/                Antinuke detection logic
-│   ├── automod/                 Automod enforcement
-│   ├── interactions/            Interaction-specific handlers
-│   ├── messageCreate.js         Prefix command dispatcher
-│   ├── interactionCreate.js     Slash command dispatcher
-│   ├── welcomeEvent.js          Welcome trigger
-│   ├── farewellEvent.js         Farewell trigger
-│   ├── voiceStateUpdate.js      J2C and voice events
-│   ├── trackUserInvites.js      Invite usage tracking
-│   ├── trackUserMessages.js     Message count tracking
-│   └── ...                      And more
-├── data/
-│   └── models/                  Sequelize database models (27 total)
-├── lib/                         Internal utilities and helpers
-│   ├── emojiSync.js             Startup emoji synchronisation
-│   ├── profileCard.js           Canvas profile card renderer
-│   ├── pagination.js            Paginated embed component
-│   ├── giveawayUtils.js         Giveaway timer and result logic
-│   ├── ticketUtils.js           Ticket creation and management
-│   ├── commandLoader.js         Dynamic command loader
-│   └── ...                      And more
-└── static/                      Static assets (fonts, badges, images)
-```
+The project retains the original command, gateway, database, and utility architecture. All functionality is unchanged.
 
 ---
 
 ## Credits
 
-**Developer** — [itsfizys](https://github.com/itsfizys) (Aegis)  
-**Organisation** — [AeroX Development](https://github.com/AeroXDevs)
+**Rebranded as** — **PauzeX**  
+**Organisation** — [PauzeDevs](https://github.com/PauzeDevs)
 
 ---
 
 ## Support
 
-Join the AeroX Development Discord server for help, updates, and community support.
+Join the PauzeDevs community for help, updates, and support.
 
-**[discord.gg/aerox](https://discord.gg/aerox)**
+**[PauzeDevs](https://github.com/PauzeDevs)**
 
 ---
 
 <div align="center">
 
-© 2026 itsfizys (Aegis) — AeroX Development. All rights reserved.  
+© 2026 PauzeDevs — PauzeX.  
 See [LICENSE](./LICENSE) for usage terms.
 
 </div>
