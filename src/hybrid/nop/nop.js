@@ -101,27 +101,52 @@ async function showPlanSelector(interactionOrMessage, targetUser) {
     const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_plan_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
-        if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\n\nYou are not authorized to use this menu.' });
+        if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nYou are not authorized to use this menu.' });
         const months = Number(menuInteraction.values[0]);
         const plan = PLANS.find(p => p.value === String(months));
-        if (!plan) return menuInteraction.reply({ content: '**No-Prefix**\n\nInvalid plan selected.' });
-        const grantedAt = new Date();
-        const expiresAt = addMonths(grantedAt, months);
-        const actor = menuInteraction.user;
-        await NoPrefix.upsert({ userId: targetUser.id, username: targetUser.username, grantedBy: actor.id, grantedByUsername: actor.username, expiresAt, duration: plan.label, enabled: true });
-        NoPrefix.invalidateCache(targetUser.id);
-        const resultContainer = new ContainerBuilder()
-            .setAccentColor(0x2B2D31)
-            .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No Prefix Granted**'))
-            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-            .addTextDisplayComponents(new TextDisplayBuilder().setContent(`> User: **${targetUser.tag}**\n> Plan: **${plan.label}**\n> Status: **Enabled**\n> Granted: <t:${Math.floor(grantedAt.getTime() / 1000)}:F>\n> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:F>`))
-            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-            .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# No-prefix access granted successfully.'));
-        await menuInteraction.update({ components: [resultContainer], flags: MessageFlags.IsComponentsV2 });
-        collector.stop('completed');
+        if (!plan) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nInvalid plan selected.' });
+
+        await menuInteraction.deferUpdate();
+
+        try {
+            const grantedAt = new Date();
+            const expiresAt = addMonths(grantedAt, months);
+            const actor = menuInteraction.user;
+            await NoPrefix.upsert({
+                userId: targetUser.id,
+                username: targetUser.username,
+                grantedBy: actor.id,
+                grantedByUsername: actor.username,
+                expiresAt,
+                duration: plan.label,
+                enabled: true
+            });
+            NoPrefix.invalidateCache(targetUser.id);
+
+            const resultContainer = new ContainerBuilder()
+                .setAccentColor(0x2B2D31)
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No Prefix Granted**'))
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+                    `> User: **${targetUser.tag}**\\n> Plan: **${plan.label}**\\n> Status: **Enabled**\\n> Granted: <t:${Math.floor(grantedAt.getTime() / 1000)}:F>\\n> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:F>`
+                ))
+                .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# No-prefix access granted successfully.'));
+
+            await message.edit({ components: [resultContainer], flags: MessageFlags.IsComponentsV2 });
+            collector.stop('completed');
+        } catch (error) {
+            const errorContainer = new ContainerBuilder()
+                .setAccentColor(0x2B2D31)
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+                    `**No-Prefix Error**\\n\\n> ${String(error?.message || 'Failed to grant no-prefix access.').slice(0, 1000)}`
+                ));
+            await message.edit({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {});
+            collector.stop('error');
+        }
     });
     collector.on('end', async (_, reason) => {
-        if (reason === 'completed') return;
+        if (reason === 'completed' || reason === 'error') return;
         try {
             const disabledSelect = new StringSelectMenuBuilder().setCustomId(`nop_plan_disabled_${targetUser.id}`).setPlaceholder('Plan selection expired').setDisabled(true).addOptions(PLANS);
             await message.edit({ components: [message.components[0], new ActionRowBuilder().addComponents(disabledSelect)], flags: MessageFlags.IsComponentsV2 });
@@ -135,16 +160,41 @@ async function showToggleSelector(interactionOrMessage, targetUser, record) {
     const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_toggle_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
-        if (menuInteraction.user.id !== targetUser.id) return menuInteraction.reply({ content: '**No-Prefix**\n\nOnly the user whose access is being changed can use this menu.' });
-        const current = await getActiveRecord(targetUser.id);
-        if (!current) return menuInteraction.update({ components: [new ContainerBuilder().setAccentColor(0x2B2D31).addTextDisplayComponents(new TextDisplayBuilder().setContent('**No-Prefix Toggle**\n\nYour no-prefix plan is no longer active.'))], flags: MessageFlags.IsComponentsV2 });
-        const enabled = menuInteraction.values[0] === 'on';
-        await current.update({ enabled });
-        NoPrefix.invalidateCache(targetUser.id);
-        const expiresText = current.expiresAt ? `<t:${Math.floor(new Date(current.expiresAt).getTime() / 1000)}:F>` : '**Never**';
-        return menuInteraction.update({ components: [new ContainerBuilder().setAccentColor(0x2B2D31).addTextDisplayComponents(new TextDisplayBuilder().setContent(
-            `**No-Prefix ${enabled ? 'Enabled' : 'Disabled'}**\n\n> User: **${targetUser.tag}**\n> Status: **${enabled ? 'Enabled' : 'Disabled'}**\n> Plan: **${current.duration}**\n> Expires: ${expiresText}`
-        ))], flags: MessageFlags.IsComponentsV2 });
+        if (menuInteraction.user.id !== targetUser.id) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nOnly the user whose access is being changed can use this menu.' });
+
+        await menuInteraction.deferUpdate();
+
+        try {
+            const current = await getActiveRecord(targetUser.id);
+            if (!current) {
+                const container = new ContainerBuilder()
+                    .setAccentColor(0x2B2D31)
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No-Prefix Toggle**\\n\\nYour no-prefix plan is no longer active.'));
+                await message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+                collector.stop('error');
+                return;
+            }
+
+            const enabled = menuInteraction.values[0] === 'on';
+            await current.update({ enabled });
+            NoPrefix.invalidateCache(targetUser.id);
+            const expiresText = current.expiresAt ? `<t:${Math.floor(new Date(current.expiresAt).getTime() / 1000)}:F>` : '**Never**';
+            const container = new ContainerBuilder()
+                .setAccentColor(0x2B2D31)
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+                    `**No-Prefix ${enabled ? 'Enabled' : 'Disabled'}**\\n\\n> User: **${targetUser.tag}**\\n> Status: **${enabled ? 'Enabled' : 'Disabled'}**\\n> Plan: **${current.duration}**\\n> Expires: ${expiresText}`
+                ));
+            await message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+            collector.stop('completed');
+        } catch (error) {
+            const errorContainer = new ContainerBuilder()
+                .setAccentColor(0x2B2D31)
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+                    `**No-Prefix Error**\\n\\n> ${String(error?.message || 'Failed to update no-prefix access.').slice(0, 1000)}`
+                ));
+            await message.edit({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {});
+            collector.stop('error');
+        }
     });
     return message;
 }
