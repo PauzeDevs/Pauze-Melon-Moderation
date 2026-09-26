@@ -86,7 +86,7 @@ function buildResponse(title, body, footer = null) {
 
     return {
         components: [container],
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+        flags: MessageFlags.IsComponentsV2
     };
 }
 
@@ -98,7 +98,7 @@ async function reply(source, title, body, footer = null) {
 
 async function defer(source) {
     if (source.isChatInputCommand?.() && !source.deferred && !source.replied) {
-        await source.deferReply({ flags: MessageFlags.Ephemeral });
+        await source.deferReply();
     }
 }
 
