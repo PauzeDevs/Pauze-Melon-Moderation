@@ -58,7 +58,7 @@ async function apiRequest(method, path, options = {}) {
 function cleanLogLine(line) {
     return String(line)
         .replace(/\x1b\[[0-?]*[ -\/]*[@-~]/g, '')
-        .replace(/`/g, '\u0060');
+        .replace(/`/g, "'");
 }
 
 function formatLogs(lines, maxLines = 35) {
@@ -67,7 +67,8 @@ function formatLogs(lines, maxLines = 35) {
 
     let output = safeLines.join('\n');
     if (output.length > 1550) output = output.slice(-1550);
-    return `\\`\\`\\`text\n${output}\n\\`\\`\\``;
+    const fence = String.fromCharCode(96).repeat(3);
+    return `${fence}text\n${output}\n${fence}`;
 }
 
 function buildResponse(title, body, footer = null) {
