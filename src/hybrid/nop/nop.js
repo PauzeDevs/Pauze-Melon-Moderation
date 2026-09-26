@@ -27,10 +27,7 @@ function isOwner(interactionOrMessage) {
 }
 
 async function resolveUser(interactionOrMessage, args, optionName = 'user') {
-    if (interactionOrMessage.isChatInputCommand?.()) {
-        return interactionOrMessage.options.getUser(optionName);
-    }
-
+    if (interactionOrMessage.isChatInputCommand?.()) return interactionOrMessage.options.getUser(optionName);
     const userId = interactionOrMessage.mentions.users.first()?.id || args[0];
     if (!userId) return null;
     return interactionOrMessage.client.users.fetch(userId).catch(() => null);
@@ -49,37 +46,19 @@ function addMonths(date, months) {
 async function getActiveRecord(userId) {
     const record = await NoPrefix.findOne({ where: { userId } });
     if (!record) return null;
-
     if (record.expiresAt && new Date() > new Date(record.expiresAt)) {
         await record.destroy();
         NoPrefix.invalidateCache(userId);
         return null;
     }
-
     return record;
 }
 
-function sendPublic(interactionOrMessage, content, extra = {}) {
+function sendPublic(interactionOrMessage, content) {
     const container = new ContainerBuilder()
         .setAccentColor(0x2B2D31)
         .addTextDisplayComponents(new TextDisplayBuilder().setContent(content));
-
-    if (extra.separator) {
-        container
-            .addSeparatorComponents(
-                new SeparatorBuilder()
-                    .setSpacing(SeparatorSpacingSize.Small)
-                    .setDivider(true)
-            )
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(extra.separator)
-            );
-    }
-
-    return interactionOrMessage.reply({
-        components: [container],
-        flags: MessageFlags.IsComponentsV2
-    });
+    return interactionOrMessage.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
 }
 
 function buildPlanMessage(targetUser) {
@@ -87,288 +66,126 @@ function buildPlanMessage(targetUser) {
         .setCustomId(`nop_plan_${targetUser.id}`)
         .setPlaceholder('Select a no-prefix plan')
         .addOptions(PLANS);
-
     const row = new ActionRowBuilder().addComponents(select);
-
     const container = new ContainerBuilder()
         .setAccentColor(0x2B2D31)
-        .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(
-                '**No-Prefix Plans**'
-            )
-        )
-        .addSeparatorComponents(
-            new SeparatorBuilder()
-                .setSpacing(SeparatorSpacingSize.Small)
-                .setDivider(true)
-        )
-        .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(
-                `> User: **${targetUser.tag}**\\n> Choose a plan below to grant no-prefix access.`
-            )
-        );
-
-    return {
-        components: [container, row],
-        flags: MessageFlags.IsComponentsV2
-    };
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No-Prefix Plans**'))
+        .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`> User: **${targetUser.tag}**\n> Choose a plan below to grant no-prefix access.`));
+    return { components: [container, row], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function showPlanSelector(interactionOrMessage, targetUser) {
     const message = await interactionOrMessage.reply(buildPlanMessage(targetUser));
-
-    const collector = message.createMessageComponentCollector({
-        componentType: 3,
-        time: 60000,
-        filter: i => i.customId === `nop_plan_${targetUser.id}`
-    });
+    const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_plan_${targetUser.id}` });
 
     collector.on('collect', async (menuInteraction) => {
-        if (!isOwner(menuInteraction)) {
-            return menuInteraction.reply({
-                content: '**No-Prefix**\\n\\nYou are not authorized to use this menu.'
-            });
-        }
-
+        if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\n\nYou are not authorized to use this menu.' });
         const months = Number(menuInteraction.values[0]);
         const plan = PLANS.find(p => p.value === String(months));
-        if (!plan) {
-            return menuInteraction.reply({
-                content: '**No-Prefix**\\n\\nInvalid plan selected.'
-            });
-        }
+        if (!plan) return menuInteraction.reply({ content: '**No-Prefix**\n\nInvalid plan selected.' });
 
-        const expiresAt = addMonths(new Date(), months);
+        const grantedAt = new Date();
+        const expiresAt = addMonths(grantedAt, months);
         const actor = menuInteraction.user;
-
-        await NoPrefix.upsert({
-            userId: targetUser.id,
-            username: targetUser.username,
-            grantedBy: actor.id,
-            grantedByUsername: actor.username,
-            expiresAt,
-            duration: plan.label
-        });
-
+        await NoPrefix.upsert({ userId: targetUser.id, username: targetUser.username, grantedBy: actor.id, grantedByUsername: actor.username, expiresAt, duration: plan.label });
         NoPrefix.invalidateCache(targetUser.id);
 
         const resultContainer = new ContainerBuilder()
             .setAccentColor(0x2B2D31)
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent('**No Prefix Granted**')
-            )
-            .addSeparatorComponents(
-                new SeparatorBuilder()
-                    .setSpacing(SeparatorSpacingSize.Small)
-                    .setDivider(true)
-            )
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(
-                    `> User: **${targetUser.tag}**\\n` +
-                    `> Plan: **${plan.label}**\\n` +
-                    `> Status: **Enabled**\\n` +
-                    `> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:R>`
-                )
-            )
-            .addSeparatorComponents(
-                new SeparatorBuilder()
-                    .setSpacing(SeparatorSpacingSize.Small)
-                    .setDivider(true)
-            )
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent('-# No-prefix access granted successfully.')
-            );
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No Prefix Granted**'))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+                `> User: **${targetUser.tag}**\n> Plan: **${plan.label}**\n> Status: **Enabled**\n> Granted: <t:${Math.floor(grantedAt.getTime() / 1000)}:F>\n> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:F>`
+            ))
+            .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+            .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# No-prefix access granted successfully.'));
 
-        await menuInteraction.update({
-            components: [resultContainer],
-            flags: MessageFlags.IsComponentsV2
-        });
-
+        await menuInteraction.update({ components: [resultContainer], flags: MessageFlags.IsComponentsV2 });
         collector.stop('completed');
     });
 
     collector.on('end', async (_, reason) => {
         if (reason === 'completed') return;
-
         try {
-            const disabledSelect = new StringSelectMenuBuilder()
-                .setCustomId(`nop_plan_disabled_${targetUser.id}`)
-                .setPlaceholder('Plan selection expired')
-                .setDisabled(true)
-                .addOptions(PLANS);
-
+            const disabledSelect = new StringSelectMenuBuilder().setCustomId(`nop_plan_disabled_${targetUser.id}`).setPlaceholder('Plan selection expired').setDisabled(true).addOptions(PLANS);
             const row = new ActionRowBuilder().addComponents(disabledSelect);
-
-            await message.edit({
-                components: [message.components[0], row],
-                flags: MessageFlags.IsComponentsV2
-            });
+            await message.edit({ components: [message.components[0], row], flags: MessageFlags.IsComponentsV2 });
         } catch (_) {}
     });
-
     return message;
 }
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('nop')
-        .setDescription('Manage no-prefix access')
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('add')
-                .setDescription('Add a user to no-prefix access')
-                .addUserOption(option =>
-                    option.setName('user').setDescription('User to add').setRequired(true)
-                )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('remove')
-                .setDescription('Remove a user from no-prefix access')
-                .addUserOption(option =>
-                    option.setName('user').setDescription('User to remove').setRequired(true)
-                )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('info')
-                .setDescription('View no-prefix information')
-                .addUserOption(option =>
-                    option.setName('user').setDescription('User to check').setRequired(false)
-                )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('toggle')
-                .setDescription('Toggle no-prefix access for a user')
-                .addUserOption(option =>
-                    option.setName('user').setDescription('User to toggle').setRequired(true)
-                )
-        ),
+        .setName('nop').setDescription('Manage no-prefix access')
+        .addSubcommand(subcommand => subcommand.setName('add').setDescription('Add a user to no-prefix access').addUserOption(option => option.setName('user').setDescription('User to add').setRequired(true)))
+        .addSubcommand(subcommand => subcommand.setName('remove').setDescription('Remove a user from no-prefix access').addUserOption(option => option.setName('user').setDescription('User to remove').setRequired(true)))
+        .addSubcommand(subcommand => subcommand.setName('info').setDescription('View no-prefix information').addUserOption(option => option.setName('user').setDescription('User to check').setRequired(false)))
+        .addSubcommand(subcommand => subcommand.setName('toggle').setDescription('Toggle no-prefix access for a user').addUserOption(option => option.setName('user').setDescription('User to toggle').setRequired(true))),
 
     name: 'nop',
     aliases: ['no-prefix'],
     description: 'Manage no-prefix access',
 
     async execute(interactionOrMessage, args = []) {
-        if (!isOwner(interactionOrMessage)) {
-            return sendPublic(
-                interactionOrMessage,
-                '**No-Prefix**\\n\\nYou are not authorized to use this command.'
-            );
-        }
-
+        if (!isOwner(interactionOrMessage)) return sendPublic(interactionOrMessage, '**No-Prefix**\n\nYou are not authorized to use this command.');
         const isSlash = interactionOrMessage.isChatInputCommand?.() === true;
-        const action = isSlash
-            ? interactionOrMessage.options.getSubcommand()
-            : args[0]?.toLowerCase();
-
-        if (!action) {
-            return sendPublic(
-                interactionOrMessage,
-                '**No-Prefix**\\n\\n' +
-                'Use `/nop add <user>`, `/nop remove <user>`, `/nop info [user]`, or `/nop toggle <user>`.'
-            );
-        }
+        const action = isSlash ? interactionOrMessage.options.getSubcommand() : args[0]?.toLowerCase();
+        if (!action) return sendPublic(interactionOrMessage, '**No-Prefix**\n\nUse `/nop add <user>`, `/nop remove <user>`, `/nop info [user]`, or `/nop toggle <user>`.');
 
         if (action === 'add') {
             const targetUser = await resolveUser(interactionOrMessage, args.slice(1));
-            if (!targetUser) {
-                return sendPublic(interactionOrMessage, '**No-Prefix**\\n\\nPlease provide a valid user.');
-            }
-
+            if (!targetUser) return sendPublic(interactionOrMessage, '**No-Prefix**\n\nPlease provide a valid user.');
             return showPlanSelector(interactionOrMessage, targetUser);
         }
 
         if (action === 'remove') {
             const targetUser = await resolveUser(interactionOrMessage, args.slice(1));
-            if (!targetUser) {
-                return sendPublic(interactionOrMessage, '**No-Prefix**\\n\\nPlease provide a valid user.');
-            }
-
+            if (!targetUser) return sendPublic(interactionOrMessage, '**No-Prefix**\n\nPlease provide a valid user.');
             const existing = await getActiveRecord(targetUser.id);
-            if (!existing) {
-                return sendPublic(
-                    interactionOrMessage,
-                    `**No-Prefix**\\n\\n**${targetUser.tag}** does not have no-prefix access.`
-                );
-            }
-
+            if (!existing) return sendPublic(interactionOrMessage, `**No-Prefix**\n\n**${targetUser.tag}** does not have no-prefix access.`);
             await NoPrefix.destroy({ where: { userId: targetUser.id } });
             NoPrefix.invalidateCache(targetUser.id);
-
-            return sendPublic(
-                interactionOrMessage,
-                `**No-Prefix Removed**\\n\\n> User: **${targetUser.tag}**\\n> Status: **Disabled**`
-            );
+            return sendPublic(interactionOrMessage, `**No-Prefix Removed**\n\n> User: **${targetUser.tag}**\n> Status: **Disabled**`);
         }
 
         if (action === 'info') {
-            const targetUser = isSlash
-                ? (interactionOrMessage.options.getUser('user') || interactionOrMessage.user)
-                : (await resolveUser(interactionOrMessage, args.slice(1)) || interactionOrMessage.author);
-
+            const targetUser = isSlash ? (interactionOrMessage.options.getUser('user') || interactionOrMessage.user) : (await resolveUser(interactionOrMessage, args.slice(1)) || interactionOrMessage.author);
             const record = await getActiveRecord(targetUser.id);
-            if (!record) {
-                return sendPublic(
-                    interactionOrMessage,
-                    `**No-Prefix Info**\\n\\n> User: **${targetUser.tag}**\\n> Status: **Disabled**`
-                );
-            }
+            if (!record) return sendPublic(interactionOrMessage, `**No-Prefix Info**\n\n> User: **${targetUser.tag}**\n> Status: **Disabled**`);
 
-            const expires = record.expiresAt
-                ? `<t:${Math.floor(new Date(record.expiresAt).getTime() / 1000)}:R>`
-                : '**Never**';
+            const grantedAt = record.grantedAt || record.createdAt;
+            const grantedText = grantedAt ? `<t:${Math.floor(new Date(grantedAt).getTime() / 1000)}:F>` : '**Unknown**';
+            const expiresText = record.expiresAt ? `<t:${Math.floor(new Date(record.expiresAt).getTime() / 1000)}:F>` : '**Never**';
 
-            return sendPublic(
-                interactionOrMessage,
-                '**No-Prefix Info**\\n\\n' +
-                `> User: **${targetUser.tag}**\\n` +
-                '> Status: **Enabled**\\n' +
-                `> Plan: **${record.duration}**\\n` +
-                `> Expires: ${expires}\\n` +
+            return sendPublic(interactionOrMessage,
+                '**No-Prefix Info**\n\n' +
+                `> User: **${targetUser.tag}**\n` +
+                '> Status: **Enabled**\n' +
+                `> Plan: **${record.duration}**\n` +
+                `> Granted: ${grantedText}\n` +
+                `> Expires: ${expiresText}\n` +
                 `> Granted by: **${record.grantedByUsername}**`
             );
         }
 
         if (action === 'toggle') {
             const targetUser = await resolveUser(interactionOrMessage, args.slice(1));
-            if (!targetUser) {
-                return sendPublic(interactionOrMessage, '**No-Prefix**\\n\\nPlease provide a valid user.');
-            }
-
+            if (!targetUser) return sendPublic(interactionOrMessage, '**No-Prefix**\n\nPlease provide a valid user.');
             const existing = await getActiveRecord(targetUser.id);
-
             if (existing) {
                 await NoPrefix.destroy({ where: { userId: targetUser.id } });
                 NoPrefix.invalidateCache(targetUser.id);
-
-                return sendPublic(
-                    interactionOrMessage,
-                    `**No-Prefix Toggle**\\n\\n> User: **${targetUser.tag}**\\n> Status: **Disabled**`
-                );
+                return sendPublic(interactionOrMessage, `**No-Prefix Toggle**\n\n> User: **${targetUser.tag}**\n> Status: **Disabled**`);
             }
-
             const grantedBy = interactionOrMessage.user?.id || interactionOrMessage.author.id;
             const grantedByUsername = interactionOrMessage.user?.username || interactionOrMessage.author.username;
-
-            await NoPrefix.upsert({
-                userId: targetUser.id,
-                username: targetUser.username,
-                grantedBy,
-                grantedByUsername,
-                expiresAt: null,
-                duration: 'permanent'
-            });
-
+            await NoPrefix.upsert({ userId: targetUser.id, username: targetUser.username, grantedBy, grantedByUsername, expiresAt: null, duration: 'permanent' });
             NoPrefix.invalidateCache(targetUser.id);
-
-            return sendPublic(
-                interactionOrMessage,
-                `**No-Prefix Toggle**\\n\\n> User: **${targetUser.tag}**\\n> Status: **Enabled**\\n> Expires: **Never**`
-            );
+            return sendPublic(interactionOrMessage, `**No-Prefix Toggle**\n\n> User: **${targetUser.tag}**\n> Status: **Enabled**\n> Expires: **Never**`);
         }
 
-        return sendPublic(interactionOrMessage, '**No-Prefix**\\n\\nUnknown subcommand.');
+        return sendPublic(interactionOrMessage, '**No-Prefix**\n\nUnknown subcommand.');
     }
 };
