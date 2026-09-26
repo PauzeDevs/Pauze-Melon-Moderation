@@ -77,7 +77,8 @@ module.exports = {
                 prompt,
                 systemPrompt: SYSTEM_PROMPT,
                 includeHistory: true,
-                saveToHistory: true
+                saveToHistory: true,
+                model: 'openai/gpt-oss-120b'
             });
 
             if (!result.success) {
