@@ -26,7 +26,12 @@ const makeApiRequest = async (messages, options = {}) => {
         throw new Error('No API keys configured');
     }
     
-    const model = options.model || 'compound-beta';
+    // Groq decommissioned groq/compound and groq/compound-mini.
+    // Route any legacy caller to the supported Compound Beta model.
+    const requestedModel = options.model || 'compound-beta';
+    const model = (requestedModel === 'groq/compound' || requestedModel === 'groq/compound-mini')
+        ? 'compound-beta'
+        : requestedModel;
     const maxTokens = options.maxTokens || 4096;
     const temperature = options.temperature || 0.6;
     
