@@ -62,7 +62,19 @@ function cleanLogLine(line) {
 }
 
 function formatLogs(lines, maxLines = 35) {
-    const safeLines = Array.isArray(lines) ? lines.map(cleanLogLine).slice(-maxLines) : [];
+    let safeLines = [];
+
+    if (Array.isArray(lines)) {
+        safeLines = lines;
+    } else if (typeof lines === 'string') {
+        safeLines = lines.split(/\r?\n/);
+    } else if (lines?.lines && Array.isArray(lines.lines)) {
+        safeLines = lines.lines;
+    } else if (lines?.output) {
+        safeLines = String(lines.output).split(/\r?\n/);
+    }
+
+    safeLines = safeLines.map(cleanLogLine).slice(-maxLines);
     if (!safeLines.length) return 'No console logs were returned.';
 
     let output = safeLines.join('\n');
@@ -111,15 +123,23 @@ async function getLogs(size = 100, waitSeconds = 0) {
 
 async function handleRestart(source) {
     await defer(source);
+
+    await reply(
+        source,
+        'System Restart',
+        '**Shell**\n```text\n$ deployment restart\nrunning...\n```',
+        'Restart request sent to Bot-Hosting.net.'
+    );
+
     const result = await apiRequest('POST', `/deployments/${encodeURIComponent(DEPLOYMENT_ID)}/power`, {
         data: { action: 'restart', waitSeconds: 20 },
         timeout: 35000
     });
 
     let logs = result.logs;
-    if (!Array.isArray(logs) || logs.length === 0) {
+    if (!logs || (Array.isArray(logs) && logs.length === 0)) {
         try {
-            const logResult = await getLogs(60, 0);
+            const logResult = await getLogs(80, 3);
             logs = logResult.lines;
         } catch (_) {}
     }
@@ -129,7 +149,7 @@ async function handleRestart(source) {
     return reply(
         source,
         'System Restart',
-        `> State: **${state}**\n> Result: **${result.ok ? 'Accepted' : 'Failed'}**\n> Reason: **${result.reason || 'N/A'}**\n\n**Console Logs**\n${logText}`,
+        `**Shell**\n\`\`\`text\n$ deployment restart\nexited: ${result.ok ? '0' : '1'}\n\`\`\`\n\n> State: **${state}**\n> Result: **${result.ok ? 'Accepted' : 'Failed'}**\n> Reason: **${result.reason || 'N/A'}**\n\n**Console Logs**\n${logText}`,
         result.hint || 'Restart completed through Bot-Hosting.net.'
     );
 }
@@ -167,21 +187,32 @@ async function handleStatus(source) {
 
 async function handlePull(source) {
     await defer(source);
+
+    await reply(
+        source,
+        'System Pull',
+        '**Shell**\n```text\n$ git pull\nrunning...\n```',
+        'Pull request sent to Bot-Hosting.net.'
+    );
+
     const result = await apiRequest('POST', `/deployments/${encodeURIComponent(DEPLOYMENT_ID)}/sync`, {
         data: {},
         timeout: 60000
     });
 
-    let logText = '';
-    try {
-        const logs = await getLogs(40, 1);
-        logText = `\n\n**Console Logs**\n${formatLogs(logs.lines, 30)}`;
-    } catch (_) {}
+    let logs = result.logs || result.output;
+    if (!logs || (Array.isArray(logs) && logs.length === 0)) {
+        try {
+            const logResult = await getLogs(60, 2);
+            logs = logResult.lines;
+        } catch (_) {}
+    }
 
+    const logText = formatLogs(logs, 30);
     return reply(
         source,
         'System Pull',
-        `> Result: **${result.ok ? 'Success' : 'Failed'}**\n> Repository: **${result.repo || 'N/A'}**\n> Branch: **${result.branch || 'N/A'}**\n> Commit: **${result.commit || 'N/A'}**${logText}`,
+        `**Shell**\n\`\`\`text\n$ git pull\nexited: ${result.ok ? '0' : '1'}\n\`\`\`\n\n> Result: **${result.ok ? 'Success' : 'Failed'}**\n> Repository: **${result.repo || 'N/A'}**\n> Branch: **${result.branch || 'N/A'}**\n> Commit: **${result.commit || 'N/A'}**\n\n**Console Logs**\n${logText}`,
         'Latest code pulled from the linked GitHub repository.'
     );
 }
