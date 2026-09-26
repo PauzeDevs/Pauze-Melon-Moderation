@@ -8,7 +8,7 @@ module.exports = {
     CLIENT_ID: '1390663877544509580',
     OWNER_ID: '1124248109472550993', // owner-only commands
 
-    PREFIX: ',', // default text command prefix
+    PREFIX: '?', // default text command prefix
 
     STATUS: {
         status: 'idle', // online / idle / dnd / invisible
