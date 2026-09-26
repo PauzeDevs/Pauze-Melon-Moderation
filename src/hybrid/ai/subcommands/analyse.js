@@ -87,10 +87,20 @@ module.exports = {
         }
 
         let thinkingMsg = null;
+        const thinkingContainer = new ContainerBuilder().setAccentColor(0x2B2D31)
+            .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(`${emojis.loading} **AI is thinking..**`)
+            );
         if (isSlashCommand) {
-            await interactionOrMessage.deferReply();
+            await interactionOrMessage.reply({
+                components: [thinkingContainer],
+                flags: MessageFlags.IsComponentsV2
+            });
         } else {
-            thinkingMsg = await interactionOrMessage.reply(`${emojis.loading} Analyzing image...`);
+            thinkingMsg = await interactionOrMessage.reply({
+                components: [thinkingContainer],
+                flags: MessageFlags.IsComponentsV2
+            });
         }
 
         try {
