@@ -101,10 +101,10 @@ async function showPlanSelector(interactionOrMessage, targetUser) {
     const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_plan_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
-        if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nYou are not authorized to use this menu.' });
+        if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\n\nYou are not authorized to use this menu.' });
         const months = Number(menuInteraction.values[0]);
         const plan = PLANS.find(p => p.value === String(months));
-        if (!plan) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nInvalid plan selected.' });
+        if (!plan) return menuInteraction.reply({ content: '**No-Prefix**\n\nInvalid plan selected.' });
 
         await menuInteraction.deferUpdate();
 
@@ -128,7 +128,7 @@ async function showPlanSelector(interactionOrMessage, targetUser) {
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No Prefix Granted**'))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                    `> User: **${targetUser.tag}**\\n> Plan: **${plan.label}**\\n> Status: **Enabled**\\n> Granted: <t:${Math.floor(grantedAt.getTime() / 1000)}:F>\\n> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:F>`
+                    `> User: **${targetUser.tag}**\n> Plan: **${plan.label}**\n> Status: **Enabled**\n> Granted: <t:${Math.floor(grantedAt.getTime() / 1000)}:F>\n> Expires: <t:${Math.floor(expiresAt.getTime() / 1000)}:F>`
                 ))
                 .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent('-# No-prefix access granted successfully.'));
@@ -139,7 +139,7 @@ async function showPlanSelector(interactionOrMessage, targetUser) {
             const errorContainer = new ContainerBuilder()
                 .setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                    `**No-Prefix Error**\\n\\n> ${String(error?.message || 'Failed to grant no-prefix access.').slice(0, 1000)}`
+                    `**No-Prefix Error**\n\n> ${String(error?.message || 'Failed to grant no-prefix access.').slice(0, 1000)}`
                 ));
             await message.edit({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {});
             collector.stop('error');
@@ -160,7 +160,7 @@ async function showToggleSelector(interactionOrMessage, targetUser, record) {
     const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_toggle_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
-        if (menuInteraction.user.id !== targetUser.id) return menuInteraction.reply({ content: '**No-Prefix**\\n\\nOnly the user whose access is being changed can use this menu.' });
+        if (menuInteraction.user.id !== targetUser.id) return menuInteraction.reply({ content: '**No-Prefix**\n\nOnly the user whose access is being changed can use this menu.' });
 
         await menuInteraction.deferUpdate();
 
@@ -169,7 +169,7 @@ async function showToggleSelector(interactionOrMessage, targetUser, record) {
             if (!current) {
                 const container = new ContainerBuilder()
                     .setAccentColor(0x2B2D31)
-                    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No-Prefix Toggle**\\n\\nYour no-prefix plan is no longer active.'));
+                    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**No-Prefix Toggle**\n\nYour no-prefix plan is no longer active.'));
                 await message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
                 collector.stop('error');
                 return;
@@ -182,7 +182,7 @@ async function showToggleSelector(interactionOrMessage, targetUser, record) {
             const container = new ContainerBuilder()
                 .setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                    `**No-Prefix ${enabled ? 'Enabled' : 'Disabled'}**\\n\\n> User: **${targetUser.tag}**\\n> Status: **${enabled ? 'Enabled' : 'Disabled'}**\\n> Plan: **${current.duration}**\\n> Expires: ${expiresText}`
+                    `**No-Prefix ${enabled ? 'Enabled' : 'Disabled'}**\n\n> User: **${targetUser.tag}**\n> Status: **${enabled ? 'Enabled' : 'Disabled'}**\n> Plan: **${current.duration}**\n> Expires: ${expiresText}`
                 ));
             await message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
             collector.stop('completed');
@@ -190,7 +190,7 @@ async function showToggleSelector(interactionOrMessage, targetUser, record) {
             const errorContainer = new ContainerBuilder()
                 .setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-                    `**No-Prefix Error**\\n\\n> ${String(error?.message || 'Failed to update no-prefix access.').slice(0, 1000)}`
+                    `**No-Prefix Error**\n\n> ${String(error?.message || 'Failed to update no-prefix access.').slice(0, 1000)}`
                 ));
             await message.edit({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {});
             collector.stop('error');
