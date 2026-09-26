@@ -4,11 +4,11 @@
 module.exports = {
 
     BOT_NAME: 'PauzeX',
-    BOT_TOKEN: 'MTM5MDY2Mzg3NzU0NDUwOTU4MA.GygZd0.uFaM4y32MfuyhMyxi5mhIlRWQQYkxYfQe_04qE',
-    CLIENT_ID: '1390663877544509580',
-    OWNER_ID: '1124248109472550993', // owner-only commands
+    BOT_TOKEN: process.env.BOT_TOKEN,
+    CLIENT_ID: process.env.CLIENT_ID,
+    OWNER_ID: process.env.OWNER_ID,
 
-    PREFIX: '?', // default text command prefix
+    PREFIX: process.env.PREFIX || '?',
 
     STATUS: {
         status: 'idle', // online / idle / dnd / invisible
@@ -17,14 +17,14 @@ module.exports = {
 
     SUPPORT_SERVER: 'https://discord.gg/eUV4hJzNXN',
 
-    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_0sb7MUxrtugy@ep-little-water-adb9fuko.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require',
+    DATABASE_URL: process.env.DATABASE_URL,
 
     SERPAPI: {
-        API_KEY: 'd67ab24afd847cc1b2ebfd56c5d35cd3f856b38b5d0fe3ba80daf472e44783e8' // web search
+        API_KEY: process.env.SERPAPI_API_KEY
     },
 
     GROQ: {
-        API_KEY: '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' // AI chat
+        API_KEY: process.env.GROQ_API_KEY
     },
 
     AI_PROMPTS: {
