@@ -1,5 +1,4 @@
-// © Author: itsfizys
-// https://discord.gg/aerox
+// © PauzeX
 
 const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
@@ -19,6 +18,7 @@ class NoPrefix extends BaseModel {
                 grantedByUsername: { type: DataTypes.STRING, allowNull: false },
                 expiresAt: { type: DataTypes.DATE, allowNull: true },
                 duration: { type: DataTypes.STRING, allowNull: false },
+                enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
             },
             {
                 sequelize,
@@ -51,26 +51,10 @@ class NoPrefix extends BaseModel {
             return false;
         }
 
-        _noPrefixCache.set(userId, { val: true, ts: Date.now() });
-        return true;
+        const enabled = record.enabled !== false;
+        _noPrefixCache.set(userId, { val: enabled, ts: Date.now() });
+        return enabled;
     }
 }
 
 module.exports = NoPrefix;
-
-/*
-: ! Aegis !
-    + Discord: itsfizys
-    + Portfolio: https://itsfiizys.com
-    + Community: https://discord.gg/8wfT8SfB5Z  (Melon )
-    + for any queries reach out Community or DM me.
-*/
-
-/**
- * Project: Melon
- * Author: itsfizys (Aegis)
- * Organization: AeroX Development
- * GitHub: https://github.com/itsfizys
- * License: Custom
- * © 2026 AeroX Development. All rights reserved.
- */
