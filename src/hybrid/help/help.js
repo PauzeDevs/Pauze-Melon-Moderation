@@ -384,7 +384,7 @@ module.exports = {
         container
             .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
             .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent('-# Powered By AeroX Devs')
+                new TextDisplayBuilder().setContent('-# Powered By Pauze')
             );
 
         const reply = await interactionOrMessage.reply({
@@ -423,7 +423,7 @@ module.exports = {
                 newContainer
                     .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
                     .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent('-# Powered By AeroX Devs')
+                        new TextDisplayBuilder().setContent('-# Powered By Pauze')
                     );
             }
 
