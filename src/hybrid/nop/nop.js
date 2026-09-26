@@ -91,8 +91,14 @@ function buildToggleMessage(targetUser, enabled) {
     return { components: [container, new ActionRowBuilder().addComponents(select)], flags: MessageFlags.IsComponentsV2 };
 }
 
+async function getReplyMessage(interactionOrMessage, replyResult) {
+    if (interactionOrMessage.isChatInputCommand?.()) return interactionOrMessage.fetchReply();
+    return replyResult;
+}
+
 async function showPlanSelector(interactionOrMessage, targetUser) {
-    const message = await interactionOrMessage.reply(buildPlanMessage(targetUser));
+    const replyResult = await interactionOrMessage.reply(buildPlanMessage(targetUser));
+    const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_plan_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
         if (!isOwner(menuInteraction)) return menuInteraction.reply({ content: '**No-Prefix**\n\nYou are not authorized to use this menu.' });
@@ -125,7 +131,8 @@ async function showPlanSelector(interactionOrMessage, targetUser) {
 }
 
 async function showToggleSelector(interactionOrMessage, targetUser, record) {
-    const message = await interactionOrMessage.reply(buildToggleMessage(targetUser, record.enabled !== false));
+    const replyResult = await interactionOrMessage.reply(buildToggleMessage(targetUser, record.enabled !== false));
+    const message = await getReplyMessage(interactionOrMessage, replyResult);
     const collector = message.createMessageComponentCollector({ componentType: 3, time: 60000, filter: i => i.customId === `nop_toggle_${targetUser.id}` });
     collector.on('collect', async (menuInteraction) => {
         if (menuInteraction.user.id !== targetUser.id) return menuInteraction.reply({ content: '**No-Prefix**\n\nOnly the user whose access is being changed can use this menu.' });
