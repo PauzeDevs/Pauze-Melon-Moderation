@@ -121,7 +121,7 @@ User's request: ${prompt}`;
             ];
 
             const result = await makeApiRequest(messages, {
-                model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+                model: 'qwen/qwen3.8-27b',
                 maxTokens: 1024
             });
 
