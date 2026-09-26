@@ -115,6 +115,15 @@ const dbReady = sequelize.sync()
     .then(async () => {
         const qi = sequelize.getQueryInterface();
 
+        const noPrefixCols = await qi.describeTable('no_prefix').catch(() => null);
+        if (noPrefixCols && !noPrefixCols.enabled) {
+            await qi.addColumn('no_prefix', 'enabled', {
+                type: require('sequelize').DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: true
+            });
+        }
+
         const ticketConfigCols = await qi.describeTable('ticket_config').catch(() => null);
         if (ticketConfigCols && !ticketConfigCols.additionalRoleIds) {
             await qi.addColumn('ticket_config', 'additionalRoleIds', {
