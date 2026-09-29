@@ -93,8 +93,8 @@ CRITICAL - DO NOT DO THESE:
     }
 };
 
-////
+/**
  * Project: PauzeX
  * AI assistant and moderation bot for Pauze's Kingdom.
  * Created by Pauze.
- *// 
+ */
