@@ -11,6 +11,7 @@ const { loadSlashCommands, loadPrefixCommands, loadHybridCommands, reloadAllComm
 const { colors, printHeader, printLoading, printSuccess, printError, printInfo, printSystemReady } = require('./lib/consoleLogger');
 const botLogger    = require('./lib/botLogger');
 const runEmojiSync = require('./lib/emojiSync');
+const { startStatusHeartbeat, stopStatusHeartbeat } = require('./lib/statusHeartbeat');
 
 printHeader();
 
@@ -181,6 +182,7 @@ process.on('uncaughtException', (error) => {
 
   async function gracefulShutdown(signal) {
     console.log(`\n${colors.YELLOW}⚠${colors.RESET}  Received ${signal}, shutting down gracefully...`);
+    stopStatusHeartbeat();
     client.destroy();
     try { await models.sequelize.close(); } catch (_) {}
     process.exit(0);
@@ -226,6 +228,10 @@ process.on('uncaughtException', (error) => {
     } catch (error) {
       printError('Failed to initialize database-dependent systems: ' + error.message);
     }
+
+    // External status reporting is isolated from the bot's core systems.
+    // It becomes active only when STATUS_API_URL and STATUS_API_KEY are configured.
+    startStatusHeartbeat(client);
 
     printSystemReady();
   });
