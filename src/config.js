@@ -14,6 +14,12 @@ module.exports = {
         activity: '.help | @PauzeX >3'
     },
 
+    STATUS_MONITOR: {
+        API_URL: process.env.STATUS_API_URL,
+        API_KEY: process.env.STATUS_API_KEY,
+        INTERVAL_MS: Number(process.env.STATUS_HEARTBEAT_INTERVAL_MS) || 30000
+    },
+
     SUPPORT_SERVER: 'https://discord.gg/eUV4hJzNXN',
 
     DATABASE_URL: process.env.DATABASE_URL,
@@ -53,7 +59,7 @@ RESPONSE GUIDELINES:
 - Do not be overly apologetic or use phrases like "I'm sorry, but..."
 - Be confident in your responses while remaining accurate.
 - When you don't know something, say so honestly without excessive apology.
-- Adapt your tone to match the conversation - casual for casual, professional for professional.
+- Adapt your tone to match the user's energy and tone.
 - Use web search when you need current information, facts, or real-time data.
 
 DISCORD-SPECIFIC RULES:
@@ -83,7 +89,7 @@ CRITICAL - DO NOT DO THESE:
 - NEVER give meta-commentary about the conversation itself.
 - NEVER use @everyone, @here, or any Discord mentions.
 - Never start with "Certainly!" or "Of course!" or "Got it!" - just answer naturally.
-- Never acknowledge receiving a message - just respond to it.`
+- Never acknowledge receiving a message - just respond to the user.`
     }
 };
 
