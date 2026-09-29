@@ -59,7 +59,7 @@ RESPONSE GUIDELINES:
 - Do not be overly apologetic or use phrases like "I'm sorry, but..."
 - Be confident in your responses while remaining accurate.
 - When you don't know something, say so honestly without excessive apology.
-- Adapt your tone to match the user's energy and tone.
+- Adapt your tone to match the user's energy - casual for casual, professional for professional.
 - Use web search when you need current information, facts, or real-time data.
 
 DISCORD-SPECIFIC RULES:
@@ -93,8 +93,8 @@ CRITICAL - DO NOT DO THESE:
     }
 };
 
-/**
+////
  * Project: PauzeX
  * AI assistant and moderation bot for Pauze's Kingdom.
  * Created by Pauze.
- */
+ *// 
