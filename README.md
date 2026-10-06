@@ -91,8 +91,8 @@ Features are configured per server through the bot's setup systems.
 ### Installation
 
 ```bash
-git clone https://github.com/PauzeDevs/Pauze-Melon-Moderation.git
-cd Pauze-Melon-Moderation
+git clone https://github.com/PauzeDevs/PauzeX.git
+cd PauzeX
 npm install
 npm start
 ```
